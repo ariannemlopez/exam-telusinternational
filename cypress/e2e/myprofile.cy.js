@@ -2,24 +2,30 @@ import {login} from "./login.cy"
 
 describe('My Profile page', () => {
   beforeEach(() => {
-    cy.visit('https://www.telusinternational.ai/cmp');
+    cy.visit('https://www.telusinternational.ai/cmp')
   })
   
-  it('should add other languages', () => {
+  it('should add and remove other languages', () => {
+    const language = 'Filipino (Philippines)'
+    const proficiency = 'Native or bilingual proficiency'
     login(Cypress.env('username'), Cypress.env('password'), Cypress.env('uniqueIdentifier'))
   
-    clickUserAvatar();
-    clickMyProfileFromUserAvatar();
-    isSpecificPageVisible('Contact Info');
+    clickUserAvatar()
+    clickMyProfileFromUserAvatar()
+    isSpecificPageVisible('Contact Info')
 
     clickSpecificMyProfilePage('Languages')
 
-    clickAddButton()
+    clickButton('Add')
+    addLanguage(language, proficiency)
+    clickButton('Save')
+    verifyAddedOtherLanguage(language, proficiency)
 
-    addLanguage('Filipino (Philippines)', 'Native or bilingual proficiency') //selecting dropdown is still not working
-
-    //click save
-    //validate saved other language
+    clickTrashButton()
+    if (isYesButtonDisplayed) {
+      clickButton('Yes')
+    }
+    verifyRemovedOtherLanguage(language, proficiency)
 
   })
 })
@@ -51,18 +57,33 @@ export function clickSpecificMyProfilePage(page) {
     .click()
 }
 
-export function clickAddButton() {
-  cy.get('button')
-    .contains('Add')
-    .parent()
+export function clickButton(text) {
+  cy.get('button').contains(text).parent()
     .click()
 }
 
 export function addLanguage(language, proficiency) {
   cy.get('input[aria-label="Start typing language and select from the menu"]').should('be.visible').click()
-    .type(language)
-    .siblings().click()
+  cy.get('div').contains(language).click()
+  cy.get('div').contains(language).should('be.visible')
+  
+  cy.get('input[aria-label="Select proficiency level*"]').should('be.enabled').click()
+  cy.get('input[name="proficiency.id"]').siblings('div').contains(proficiency).click()
+}
 
-  cy.get('input[aria-label="Select proficiency level*"]').should('be.enabled')
-    .type(proficiency)
+export function verifyAddedOtherLanguage(language, proficiency) {
+  cy.get('form').contains(language).should('be.visible')
+  cy.get('form').contains(proficiency).should('be.visible')
+}
+
+export function clickTrashButton() {
+  cy.get('svg[data-icon="trash-alt"]').should('be.visible').click()
+}
+
+export function verifyRemovedOtherLanguage() {
+  cy.get('form').should('not.exist')
+}
+
+function isYesButtonDisplayed() {
+  return cy.get('button').contains('Yes').should('be.visible')
 }
